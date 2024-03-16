@@ -1,0 +1,921 @@
+
+-------------------------- DeepSpeed Flops Profiler --------------------------
+Profile Summary at step 10:
+Notations:
+data parallel size (dp_size), model parallel size(mp_size),
+number of parameters (params), number of multiply-accumulate operations(MACs),
+number of floating-point operations (flops), floating-point operations per second (FLOPS),
+fwd latency (forward propagation latency), bwd latency (backward propagation latency),
+step (weights update latency), iter latency (sum of fwd, bwd and step latency)
+
+params per gpu:                                               222.9 M 
+params of model = params per GPU * mp_size:                   222.9 M 
+fwd MACs per GPU:                                             117.73 GMACs
+fwd flops per GPU:                                            235.52 G
+fwd flops of model = fwd flops per GPU * mp_size:             235.52 G
+fwd latency:                                                  4.4 s   
+fwd FLOPS per GPU = fwd flops per GPU / fwd latency:          53.49 GFLOPS
+
+----------------------------- Aggregated Profile per GPU -----------------------------
+Top 1 modules in terms of params, MACs or fwd latency at different model depths:
+depth 0:
+    params      - {'T5ForConditionalGeneration': '222.9 M'}
+    MACs        - {'T5ForConditionalGeneration': '117.73 GMACs'}
+    fwd latency - {'T5ForConditionalGeneration': '4.4 s'}
+depth 1:
+    params      - {'T5Stack': '247.58 M'}
+    MACs        - {'T5Stack': '105.09 GMACs'}
+    fwd latency - {'T5Stack': '4.04 s'}
+depth 2:
+    params      - {'ModuleList': '198.23 M'}
+    MACs        - {'ModuleList': '105.09 GMACs'}
+    fwd latency - {'ModuleList': '4.04 s'}
+depth 3:
+    params      - {'T5Block': '198.23 M'}
+    MACs        - {'T5Block': '105.09 GMACs'}
+    fwd latency - {'T5Block': '4.04 s'}
+depth 4:
+    params      - {'ModuleList': '198.23 M'}
+    MACs        - {'ModuleList': '105.09 GMACs'}
+    fwd latency - {'ModuleList': '4.03 s'}
+depth 5:
+    params      - {'T5LayerFF': '113.26 M'}
+    MACs        - {'T5LayerFF': '57.98 GMACs'}
+    fwd latency - {'T5LayerFF': '1.83 s'}
+depth 6:
+    params      - {'T5DenseActDense': '113.25 M'}
+    MACs        - {'T5DenseActDense': '57.98 GMACs'}
+    fwd latency - {'T5Attention': '2.08 s'}
+
+------------------------------ Detailed Profile per GPU ------------------------------
+Each module profile is listed after its name in the following order: 
+params, percentage of total params, MACs, percentage of total MACs, fwd latency, percentage of total fwd latency, fwd FLOPS
+
+Note: 1. A module can have torch.nn.module or torch.nn.functional to compute logits (e.g. CrossEntropyLoss). They are not counted as submodules, thus not to be printed out. However they make up the difference between a parent's MACs (or latency) and the sum of its submodules'.
+2. Number of floating-point operations is a theoretical estimation, thus FLOPS computed using that could be larger than the maximum system throughput.
+3. The fwd latency listed in the top module's profile is directly captured at the module forward function in PyTorch, thus it's less than the fwd latency shown above which is captured in DeepSpeed.
+
+T5ForConditionalGeneration(
+  222.9 M, 100.00% Params, 117.73 GMACs, 100.00% MACs, 4.4 s, 100.00% latency, 53.49 GFLOPS, 
+  (shared): Embedding(24.67 M, 11.07% Params, 0 MACs, 0.00% MACs, 658.04 us, 0.01% latency, 0.0 FLOPS, 32128, 768)
+  (encoder): T5Stack(
+    109.63 M, 49.18% Params, 44.69 GMACs, 37.96% MACs, 1.49 s, 33.82% latency, 60.05 GFLOPS, 
+    (embed_tokens): Embedding(24.67 M, 11.07% Params, 0 MACs, 0.00% MACs, 658.04 us, 0.01% latency, 0.0 FLOPS, 32128, 768)
+    (block): ModuleList(
+      (0): T5Block(
+        7.08 M, 3.18% Params, 3.72 GMACs, 3.16% MACs, 122.87 ms, 2.79% latency, 60.64 GFLOPS, 
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 52.03 ms, 1.18% latency, 50.32 GFLOPS, 
+            (SelfAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 50.37 ms, 1.14% latency, 51.97 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 9.46 ms, 0.21% latency, 63.85 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.36 ms, 0.19% latency, 72.24 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.52 ms, 0.19% latency, 70.88 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.45 ms, 0.19% latency, 71.44 GFLOPS, in_features=768, out_features=768, bias=False)
+              (relative_attention_bias): Embedding(384, 0.00% Params, 0 MACs, 0.00% MACs, 206.95 us, 0.00% latency, 0.0 FLOPS, 32, 12)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 1.13 ms, 0.03% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 42.68 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (1): T5LayerFF(
+            4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 70.72 ms, 1.61% latency, 68.34 GFLOPS, 
+            (DenseReluDense): T5DenseActDense(
+              4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 67.49 ms, 1.53% latency, 71.61 GFLOPS, 
+              (wi): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 33.42 ms, 0.76% latency, 72.29 GFLOPS, in_features=768, out_features=3072, bias=False)
+              (wo): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 30.61 ms, 0.70% latency, 78.92 GFLOPS, in_features=3072, out_features=768, bias=False)
+              (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 46.01 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+              (act): ReLU(0, 0.00% Params, 0 MACs, 0.00% MACs, 3.24 ms, 0.07% latency, 485.22 MFLOPS, )
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.73 ms, 0.06% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 39.58 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+        )
+      )
+      (1): T5Block(
+        7.08 M, 3.18% Params, 3.72 GMACs, 3.16% MACs, 120.27 ms, 2.73% latency, 61.95 GFLOPS, 
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 49.81 ms, 1.13% latency, 52.56 GFLOPS, 
+            (SelfAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 47.16 ms, 1.07% latency, 55.52 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.39 ms, 0.19% latency, 72.01 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.6 ms, 0.20% latency, 70.23 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.18 ms, 0.19% latency, 73.81 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.37 ms, 0.19% latency, 72.14 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.21 ms, 0.05% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 38.15 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (1): T5LayerFF(
+            4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 70.35 ms, 1.60% latency, 68.71 GFLOPS, 
+            (DenseReluDense): T5DenseActDense(
+              4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 67.33 ms, 1.53% latency, 71.79 GFLOPS, 
+              (wi): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 32.32 ms, 0.73% latency, 74.76 GFLOPS, in_features=768, out_features=3072, bias=False)
+              (wo): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 31.62 ms, 0.72% latency, 76.4 GFLOPS, in_features=3072, out_features=768, bias=False)
+              (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 50.07 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+              (act): ReLU(0, 0.00% Params, 0 MACs, 0.00% MACs, 3.2 ms, 0.07% latency, 491.69 MFLOPS, )
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.54 ms, 0.06% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 37.43 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+        )
+      )
+      (2): T5Block(
+        7.08 M, 3.18% Params, 3.72 GMACs, 3.16% MACs, 130.29 ms, 2.96% latency, 57.19 GFLOPS, 
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 58.76 ms, 1.33% latency, 44.55 GFLOPS, 
+            (SelfAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 56.13 ms, 1.27% latency, 46.64 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.81 ms, 0.20% latency, 68.58 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.72 ms, 0.20% latency, 69.27 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.89 ms, 0.20% latency, 67.91 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 9.56 ms, 0.22% latency, 63.16 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.16 ms, 0.05% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 40.29 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (1): T5LayerFF(
+            4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 71.36 ms, 1.62% latency, 67.73 GFLOPS, 
+            (DenseReluDense): T5DenseActDense(
+              4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 68.07 ms, 1.55% latency, 71.01 GFLOPS, 
+              (wi): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 33.39 ms, 0.76% latency, 72.36 GFLOPS, in_features=768, out_features=3072, bias=False)
+              (wo): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 31.43 ms, 0.71% latency, 76.86 GFLOPS, in_features=3072, out_features=768, bias=False)
+              (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 40.29 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+              (act): ReLU(0, 0.00% Params, 0 MACs, 0.00% MACs, 3.06 ms, 0.07% latency, 514.79 MFLOPS, )
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.67 ms, 0.06% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 59.6 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+        )
+      )
+      (3): T5Block(
+        7.08 M, 3.18% Params, 3.72 GMACs, 3.16% MACs, 119.31 ms, 2.71% latency, 62.46 GFLOPS, 
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 48.56 ms, 1.10% latency, 53.91 GFLOPS, 
+            (SelfAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 45.6 ms, 1.04% latency, 57.41 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.42 ms, 0.19% latency, 71.77 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.03 ms, 0.18% latency, 75.21 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.12 ms, 0.18% latency, 74.4 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.16 ms, 0.19% latency, 74.02 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.47 ms, 0.06% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 38.15 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (1): T5LayerFF(
+            4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 70.61 ms, 1.60% latency, 68.46 GFLOPS, 
+            (DenseReluDense): T5DenseActDense(
+              4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 67.16 ms, 1.53% latency, 71.97 GFLOPS, 
+              (wi): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 33.12 ms, 0.75% latency, 72.94 GFLOPS, in_features=768, out_features=3072, bias=False)
+              (wo): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 30.64 ms, 0.70% latency, 78.84 GFLOPS, in_features=3072, out_features=768, bias=False)
+              (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 37.43 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+              (act): ReLU(0, 0.00% Params, 0 MACs, 0.00% MACs, 3.22 ms, 0.07% latency, 489.11 MFLOPS, )
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 3.0 ms, 0.07% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 39.82 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+        )
+      )
+      (4): T5Block(
+        7.08 M, 3.18% Params, 3.72 GMACs, 3.16% MACs, 125.29 ms, 2.85% latency, 59.47 GFLOPS, 
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 53.28 ms, 1.21% latency, 49.14 GFLOPS, 
+            (SelfAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 50.66 ms, 1.15% latency, 51.68 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 9.73 ms, 0.22% latency, 62.1 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.88 ms, 0.20% latency, 68.02 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 9.16 ms, 0.21% latency, 65.91 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.72 ms, 0.20% latency, 69.29 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.1 ms, 0.05% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 44.35 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (1): T5LayerFF(
+            4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 71.89 ms, 1.63% latency, 67.23 GFLOPS, 
+            (DenseReluDense): T5DenseActDense(
+              4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 68.09 ms, 1.55% latency, 70.98 GFLOPS, 
+              (wi): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 32.92 ms, 0.75% latency, 73.39 GFLOPS, in_features=768, out_features=3072, bias=False)
+              (wo): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 31.12 ms, 0.71% latency, 77.63 GFLOPS, in_features=3072, out_features=768, bias=False)
+              (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 48.4 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+              (act): ReLU(0, 0.00% Params, 0 MACs, 0.00% MACs, 3.85 ms, 0.09% latency, 408.69 MFLOPS, )
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 3.36 ms, 0.08% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 33.86 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+        )
+      )
+      (5): T5Block(
+        7.08 M, 3.18% Params, 3.72 GMACs, 3.16% MACs, 122.49 ms, 2.78% latency, 60.83 GFLOPS, 
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 52.66 ms, 1.20% latency, 49.72 GFLOPS, 
+            (SelfAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 50.27 ms, 1.14% latency, 52.08 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.3 ms, 0.19% latency, 72.8 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.21 ms, 0.19% latency, 73.6 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 11.16 ms, 0.25% latency, 54.11 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 9.19 ms, 0.21% latency, 65.71 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 1.97 ms, 0.04% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 37.43 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (1): T5LayerFF(
+            4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 69.73 ms, 1.58% latency, 69.32 GFLOPS, 
+            (DenseReluDense): T5DenseActDense(
+              4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 66.57 ms, 1.51% latency, 72.61 GFLOPS, 
+              (wi): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 32.26 ms, 0.73% latency, 74.9 GFLOPS, in_features=768, out_features=3072, bias=False)
+              (wo): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 30.24 ms, 0.69% latency, 79.89 GFLOPS, in_features=3072, out_features=768, bias=False)
+              (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 39.58 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+              (act): ReLU(0, 0.00% Params, 0 MACs, 0.00% MACs, 3.87 ms, 0.09% latency, 406.05 MFLOPS, )
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.75 ms, 0.06% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 33.38 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+        )
+      )
+      (6): T5Block(
+        7.08 M, 3.18% Params, 3.72 GMACs, 3.16% MACs, 118.81 ms, 2.70% latency, 62.72 GFLOPS, 
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 48.77 ms, 1.11% latency, 53.68 GFLOPS, 
+            (SelfAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 46.43 ms, 1.05% latency, 56.38 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.26 ms, 0.19% latency, 73.12 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.1 ms, 0.18% latency, 74.6 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.49 ms, 0.19% latency, 71.13 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 7.78 ms, 0.18% latency, 77.66 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 1.95 ms, 0.04% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 33.38 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (1): T5LayerFF(
+            4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 69.91 ms, 1.59% latency, 69.14 GFLOPS, 
+            (DenseReluDense): T5DenseActDense(
+              4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 66.53 ms, 1.51% latency, 72.65 GFLOPS, 
+              (wi): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 32.07 ms, 0.73% latency, 75.32 GFLOPS, in_features=768, out_features=3072, bias=False)
+              (wo): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 30.62 ms, 0.70% latency, 78.89 GFLOPS, in_features=3072, out_features=768, bias=False)
+              (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 59.13 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+              (act): ReLU(0, 0.00% Params, 0 MACs, 0.00% MACs, 3.59 ms, 0.08% latency, 438.29 MFLOPS, )
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.92 ms, 0.07% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 37.43 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+        )
+      )
+      (7): T5Block(
+        7.08 M, 3.18% Params, 3.72 GMACs, 3.16% MACs, 120.22 ms, 2.73% latency, 61.98 GFLOPS, 
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 48.46 ms, 1.10% latency, 54.03 GFLOPS, 
+            (SelfAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 45.92 ms, 1.04% latency, 57.01 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.2 ms, 0.19% latency, 73.66 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.12 ms, 0.18% latency, 74.37 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 7.87 ms, 0.18% latency, 76.72 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.29 ms, 0.19% latency, 72.86 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.1 ms, 0.05% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 36.95 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (1): T5LayerFF(
+            4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 71.65 ms, 1.63% latency, 67.46 GFLOPS, 
+            (DenseReluDense): T5DenseActDense(
+              4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 68.29 ms, 1.55% latency, 70.77 GFLOPS, 
+              (wi): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 33.11 ms, 0.75% latency, 72.98 GFLOPS, in_features=768, out_features=3072, bias=False)
+              (wo): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 31.92 ms, 0.73% latency, 75.68 GFLOPS, in_features=3072, out_features=768, bias=False)
+              (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 39.1 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+              (act): ReLU(0, 0.00% Params, 0 MACs, 0.00% MACs, 3.09 ms, 0.07% latency, 509.23 MFLOPS, )
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.91 ms, 0.07% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 37.19 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+        )
+      )
+      (8): T5Block(
+        7.08 M, 3.18% Params, 3.72 GMACs, 3.16% MACs, 126.82 ms, 2.88% latency, 58.76 GFLOPS, 
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 50.6 ms, 1.15% latency, 51.74 GFLOPS, 
+            (SelfAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 47.92 ms, 1.09% latency, 54.64 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.89 ms, 0.20% latency, 67.94 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 7.95 ms, 0.18% latency, 75.93 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.08 ms, 0.18% latency, 74.75 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 9.18 ms, 0.21% latency, 65.77 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.19 ms, 0.05% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 42.2 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (1): T5LayerFF(
+            4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 76.09 ms, 1.73% latency, 63.52 GFLOPS, 
+            (DenseReluDense): T5DenseActDense(
+              4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 72.7 ms, 1.65% latency, 66.48 GFLOPS, 
+              (wi): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 35.84 ms, 0.81% latency, 67.41 GFLOPS, in_features=768, out_features=3072, bias=False)
+              (wo): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 33.1 ms, 0.75% latency, 72.98 GFLOPS, in_features=3072, out_features=768, bias=False)
+              (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 59.13 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+              (act): ReLU(0, 0.00% Params, 0 MACs, 0.00% MACs, 3.5 ms, 0.08% latency, 449.18 MFLOPS, )
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.88 ms, 0.07% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 42.92 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+        )
+      )
+      (9): T5Block(
+        7.08 M, 3.18% Params, 3.72 GMACs, 3.16% MACs, 125.19 ms, 2.84% latency, 59.52 GFLOPS, 
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 52.08 ms, 1.18% latency, 50.27 GFLOPS, 
+            (SelfAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 49.44 ms, 1.12% latency, 52.95 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.38 ms, 0.19% latency, 72.05 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.28 ms, 0.19% latency, 72.92 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.59 ms, 0.20% latency, 70.29 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 9.56 ms, 0.22% latency, 63.16 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.21 ms, 0.05% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 38.86 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (1): T5LayerFF(
+            4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 72.99 ms, 1.66% latency, 66.22 GFLOPS, 
+            (DenseReluDense): T5DenseActDense(
+              4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 69.88 ms, 1.59% latency, 69.17 GFLOPS, 
+              (wi): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 34.04 ms, 0.77% latency, 70.97 GFLOPS, in_features=768, out_features=3072, bias=False)
+              (wo): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 32.55 ms, 0.74% latency, 74.21 GFLOPS, in_features=3072, out_features=768, bias=False)
+              (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 42.2 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+              (act): ReLU(0, 0.00% Params, 0 MACs, 0.00% MACs, 3.08 ms, 0.07% latency, 510.81 MFLOPS, )
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.62 ms, 0.06% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 41.96 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+        )
+      )
+      (10): T5Block(
+        7.08 M, 3.18% Params, 3.72 GMACs, 3.16% MACs, 128.93 ms, 2.93% latency, 57.79 GFLOPS, 
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 52.74 ms, 1.20% latency, 49.64 GFLOPS, 
+            (SelfAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 49.5 ms, 1.12% latency, 52.89 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.91 ms, 0.20% latency, 67.78 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.48 ms, 0.19% latency, 71.22 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.63 ms, 0.20% latency, 70.0 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.45 ms, 0.19% latency, 71.46 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.77 ms, 0.06% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 40.53 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (1): T5LayerFF(
+            4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 76.07 ms, 1.73% latency, 63.54 GFLOPS, 
+            (DenseReluDense): T5DenseActDense(
+              4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 72.91 ms, 1.66% latency, 66.29 GFLOPS, 
+              (wi): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 39.78 ms, 0.90% latency, 60.74 GFLOPS, in_features=768, out_features=3072, bias=False)
+              (wo): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 29.77 ms, 0.68% latency, 81.15 GFLOPS, in_features=3072, out_features=768, bias=False)
+              (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 41.48 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+              (act): ReLU(0, 0.00% Params, 0 MACs, 0.00% MACs, 3.16 ms, 0.07% latency, 497.4 MFLOPS, )
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.65 ms, 0.06% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 38.62 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+        )
+      )
+      (11): T5Block(
+        7.08 M, 3.18% Params, 3.72 GMACs, 3.16% MACs, 125.13 ms, 2.84% latency, 59.55 GFLOPS, 
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 53.65 ms, 1.22% latency, 48.8 GFLOPS, 
+            (SelfAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 50.54 ms, 1.15% latency, 51.8 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 9.52 ms, 0.22% latency, 63.43 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.33 ms, 0.19% latency, 72.48 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 9.58 ms, 0.22% latency, 63.02 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 9.09 ms, 0.21% latency, 66.42 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.58 ms, 0.06% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 42.2 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (1): T5LayerFF(
+            4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 71.36 ms, 1.62% latency, 67.73 GFLOPS, 
+            (DenseReluDense): T5DenseActDense(
+              4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 68.18 ms, 1.55% latency, 70.9 GFLOPS, 
+              (wi): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 33.73 ms, 0.77% latency, 71.63 GFLOPS, in_features=768, out_features=3072, bias=False)
+              (wo): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 30.56 ms, 0.69% latency, 79.06 GFLOPS, in_features=3072, out_features=768, bias=False)
+              (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 57.46 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+              (act): ReLU(0, 0.00% Params, 0 MACs, 0.00% MACs, 3.65 ms, 0.08% latency, 430.48 MFLOPS, )
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.69 ms, 0.06% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 40.29 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+        )
+      )
+    )
+    (final_layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.06 ms, 0.05% latency, 0.0 FLOPS, )
+    (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 93.7 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+  )
+  (decoder): T5Stack(
+    137.95 M, 61.89% Params, 60.4 GMACs, 51.30% MACs, 2.56 s, 58.04% latency, 47.29 GFLOPS, 
+    (embed_tokens): Embedding(24.67 M, 11.07% Params, 0 MACs, 0.00% MACs, 658.04 us, 0.01% latency, 0.0 FLOPS, 32128, 768)
+    (block): ModuleList(
+      (0): T5Block(
+        9.44 M, 4.23% Params, 5.03 GMACs, 4.28% MACs, 177.99 ms, 4.04% latency, 56.57 GFLOPS, 
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 56.35 ms, 1.28% latency, 46.46 GFLOPS, 
+            (SelfAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 53.21 ms, 1.21% latency, 49.2 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.17 ms, 0.19% latency, 73.97 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.97 ms, 0.20% latency, 67.34 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.05 ms, 0.18% latency, 75.03 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.14 ms, 0.18% latency, 74.16 GFLOPS, in_features=768, out_features=768, bias=False)
+              (relative_attention_bias): Embedding(384, 0.00% Params, 0 MACs, 0.00% MACs, 338.79 us, 0.01% latency, 0.0 FLOPS, 32, 12)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.61 ms, 0.06% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 45.3 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (1): T5LayerCrossAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 52.31 ms, 1.19% latency, 50.05 GFLOPS, 
+            (EncDecAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 49.0 ms, 1.11% latency, 53.43 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.64 ms, 0.20% latency, 69.93 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.99 ms, 0.20% latency, 67.15 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.52 ms, 0.19% latency, 70.91 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.15 ms, 0.19% latency, 74.11 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.86 ms, 0.06% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 38.15 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (2): T5LayerFF(
+            4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 69.14 ms, 1.57% latency, 69.91 GFLOPS, 
+            (DenseReluDense): T5DenseActDense(
+              4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 66.13 ms, 1.50% latency, 73.09 GFLOPS, 
+              (wi): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 31.77 ms, 0.72% latency, 76.05 GFLOPS, in_features=768, out_features=3072, bias=False)
+              (wo): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 30.47 ms, 0.69% latency, 79.29 GFLOPS, in_features=3072, out_features=768, bias=False)
+              (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 52.45 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+              (act): ReLU(0, 0.00% Params, 0 MACs, 0.00% MACs, 3.7 ms, 0.08% latency, 425.45 MFLOPS, )
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.53 ms, 0.06% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 52.21 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+        )
+      )
+      (1): T5Block(
+        9.44 M, 4.23% Params, 5.03 GMACs, 4.28% MACs, 172.53 ms, 3.92% latency, 58.36 GFLOPS, 
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 49.39 ms, 1.12% latency, 53.01 GFLOPS, 
+            (SelfAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 46.65 ms, 1.06% latency, 56.12 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.0 ms, 0.18% latency, 75.51 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.64 ms, 0.20% latency, 69.92 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.33 ms, 0.19% latency, 72.52 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.38 ms, 0.19% latency, 72.04 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.31 ms, 0.05% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 40.77 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (1): T5LayerCrossAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 50.99 ms, 1.16% latency, 51.35 GFLOPS, 
+            (EncDecAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 47.31 ms, 1.07% latency, 55.33 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.31 ms, 0.19% latency, 72.7 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.13 ms, 0.18% latency, 74.26 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.31 ms, 0.19% latency, 72.65 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 9.62 ms, 0.22% latency, 62.81 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 3.22 ms, 0.07% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 39.34 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (2): T5LayerFF(
+            4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 71.97 ms, 1.63% latency, 67.16 GFLOPS, 
+            (DenseReluDense): T5DenseActDense(
+              4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 68.72 ms, 1.56% latency, 70.33 GFLOPS, 
+              (wi): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 33.88 ms, 0.77% latency, 71.32 GFLOPS, in_features=768, out_features=3072, bias=False)
+              (wo): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 31.34 ms, 0.71% latency, 77.08 GFLOPS, in_features=3072, out_features=768, bias=False)
+              (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 40.77 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+              (act): ReLU(0, 0.00% Params, 0 MACs, 0.00% MACs, 3.27 ms, 0.07% latency, 480.35 MFLOPS, )
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.69 ms, 0.06% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 51.5 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+        )
+      )
+      (2): T5Block(
+        9.44 M, 4.23% Params, 5.03 GMACs, 4.28% MACs, 175.68 ms, 3.99% latency, 57.32 GFLOPS, 
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 50.3 ms, 1.14% latency, 52.05 GFLOPS, 
+            (SelfAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 47.33 ms, 1.07% latency, 55.32 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 9.65 ms, 0.22% latency, 62.59 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.12 ms, 0.18% latency, 74.4 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.18 ms, 0.19% latency, 73.85 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.26 ms, 0.19% latency, 73.12 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.52 ms, 0.06% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 39.34 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (1): T5LayerCrossAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 51.28 ms, 1.16% latency, 51.06 GFLOPS, 
+            (EncDecAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 47.96 ms, 1.09% latency, 54.59 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 9.53 ms, 0.22% latency, 63.39 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.61 ms, 0.20% latency, 70.12 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.48 ms, 0.19% latency, 71.24 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.51 ms, 0.19% latency, 70.99 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.88 ms, 0.07% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 38.86 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (2): T5LayerFF(
+            4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 73.92 ms, 1.68% latency, 65.39 GFLOPS, 
+            (DenseReluDense): T5DenseActDense(
+              4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 69.9 ms, 1.59% latency, 69.14 GFLOPS, 
+              (wi): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 35.24 ms, 0.80% latency, 68.55 GFLOPS, in_features=768, out_features=3072, bias=False)
+              (wo): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 30.82 ms, 0.70% latency, 78.38 GFLOPS, in_features=3072, out_features=768, bias=False)
+              (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 43.87 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+              (act): ReLU(0, 0.00% Params, 0 MACs, 0.00% MACs, 3.64 ms, 0.08% latency, 432.57 MFLOPS, )
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 3.54 ms, 0.08% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 38.39 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+        )
+      )
+      (3): T5Block(
+        9.44 M, 4.23% Params, 5.03 GMACs, 4.28% MACs, 183.44 ms, 4.17% latency, 54.89 GFLOPS, 
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 53.54 ms, 1.22% latency, 48.9 GFLOPS, 
+            (SelfAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 49.69 ms, 1.13% latency, 52.69 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.6 ms, 0.20% latency, 70.25 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 10.3 ms, 0.23% latency, 58.64 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.41 ms, 0.19% latency, 71.82 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.83 ms, 0.20% latency, 68.39 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.09 ms, 0.05% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 59.37 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (1): T5LayerCrossAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 56.08 ms, 1.27% latency, 46.68 GFLOPS, 
+            (EncDecAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 53.39 ms, 1.21% latency, 49.04 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 10.43 ms, 0.24% latency, 57.88 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.92 ms, 0.20% latency, 67.7 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 9.32 ms, 0.21% latency, 64.84 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 9.32 ms, 0.21% latency, 64.79 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.22 ms, 0.05% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 38.39 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (2): T5LayerFF(
+            4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 73.64 ms, 1.67% latency, 65.64 GFLOPS, 
+            (DenseReluDense): T5DenseActDense(
+              4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 70.18 ms, 1.59% latency, 68.88 GFLOPS, 
+              (wi): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 36.59 ms, 0.83% latency, 66.03 GFLOPS, in_features=768, out_features=3072, bias=False)
+              (wo): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 29.94 ms, 0.68% latency, 80.7 GFLOPS, in_features=3072, out_features=768, bias=False)
+              (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 41.48 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+              (act): ReLU(0, 0.00% Params, 0 MACs, 0.00% MACs, 3.45 ms, 0.08% latency, 456.48 MFLOPS, )
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.91 ms, 0.07% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 41.25 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+        )
+      )
+      (4): T5Block(
+        9.44 M, 4.23% Params, 5.03 GMACs, 4.28% MACs, 180.99 ms, 4.11% latency, 55.64 GFLOPS, 
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 51.56 ms, 1.17% latency, 50.78 GFLOPS, 
+            (SelfAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 48.79 ms, 1.11% latency, 53.66 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.9 ms, 0.20% latency, 67.84 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.26 ms, 0.19% latency, 73.12 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.5 ms, 0.19% latency, 71.09 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.44 ms, 0.19% latency, 71.58 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.33 ms, 0.05% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 37.19 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (1): T5LayerCrossAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 50.12 ms, 1.14% latency, 52.24 GFLOPS, 
+            (EncDecAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 46.94 ms, 1.07% latency, 55.77 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.4 ms, 0.19% latency, 71.89 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.21 ms, 0.19% latency, 73.55 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.38 ms, 0.19% latency, 72.09 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.13 ms, 0.18% latency, 74.28 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.73 ms, 0.06% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 37.19 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (2): T5LayerFF(
+            4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 79.12 ms, 1.80% latency, 61.09 GFLOPS, 
+            (DenseReluDense): T5DenseActDense(
+              4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 75.92 ms, 1.72% latency, 63.67 GFLOPS, 
+              (wi): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 40.77 ms, 0.93% latency, 59.26 GFLOPS, in_features=768, out_features=3072, bias=False)
+              (wo): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 31.61 ms, 0.72% latency, 76.42 GFLOPS, in_features=3072, out_features=768, bias=False)
+              (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 43.39 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+              (act): ReLU(0, 0.00% Params, 0 MACs, 0.00% MACs, 3.31 ms, 0.08% latency, 475.16 MFLOPS, )
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.66 ms, 0.06% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 45.06 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+        )
+      )
+      (5): T5Block(
+        9.44 M, 4.23% Params, 5.03 GMACs, 4.28% MACs, 183.52 ms, 4.17% latency, 54.87 GFLOPS, 
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 55.37 ms, 1.26% latency, 47.29 GFLOPS, 
+            (SelfAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 52.63 ms, 1.20% latency, 49.74 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.88 ms, 0.20% latency, 68.03 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.46 ms, 0.19% latency, 71.4 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.55 ms, 0.19% latency, 70.66 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 9.39 ms, 0.21% latency, 64.34 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.23 ms, 0.05% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 39.82 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (1): T5LayerCrossAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 52.73 ms, 1.20% latency, 49.65 GFLOPS, 
+            (EncDecAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 49.08 ms, 1.11% latency, 53.34 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.87 ms, 0.20% latency, 68.11 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.74 ms, 0.20% latency, 69.09 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.31 ms, 0.19% latency, 72.67 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.88 ms, 0.20% latency, 68.04 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 3.11 ms, 0.07% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 58.89 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (2): T5LayerFF(
+            4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 75.25 ms, 1.71% latency, 64.23 GFLOPS, 
+            (DenseReluDense): T5DenseActDense(
+              4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 71.91 ms, 1.63% latency, 67.22 GFLOPS, 
+              (wi): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 35.61 ms, 0.81% latency, 67.85 GFLOPS, in_features=768, out_features=3072, bias=False)
+              (wo): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 32.25 ms, 0.73% latency, 74.92 GFLOPS, in_features=3072, out_features=768, bias=False)
+              (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 51.02 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+              (act): ReLU(0, 0.00% Params, 0 MACs, 0.00% MACs, 3.8 ms, 0.09% latency, 413.38 MFLOPS, )
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.77 ms, 0.06% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 43.15 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+        )
+      )
+      (6): T5Block(
+        9.44 M, 4.23% Params, 5.03 GMACs, 4.28% MACs, 180.35 ms, 4.10% latency, 55.83 GFLOPS, 
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 52.43 ms, 1.19% latency, 49.93 GFLOPS, 
+            (SelfAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 49.48 ms, 1.12% latency, 52.91 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.41 ms, 0.19% latency, 71.78 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.64 ms, 0.20% latency, 69.87 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.46 ms, 0.19% latency, 71.39 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.91 ms, 0.20% latency, 67.78 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.44 ms, 0.06% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 41.96 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (1): T5LayerCrossAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 52.75 ms, 1.20% latency, 49.63 GFLOPS, 
+            (EncDecAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 49.51 ms, 1.12% latency, 52.87 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.39 ms, 0.19% latency, 71.99 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 9.09 ms, 0.21% latency, 66.41 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 9.03 ms, 0.20% latency, 66.92 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.8 ms, 0.20% latency, 68.66 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.76 ms, 0.06% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 39.82 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (2): T5LayerFF(
+            4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 74.98 ms, 1.70% latency, 64.46 GFLOPS, 
+            (DenseReluDense): T5DenseActDense(
+              4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 71.5 ms, 1.62% latency, 67.6 GFLOPS, 
+              (wi): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 35.44 ms, 0.80% latency, 68.17 GFLOPS, in_features=768, out_features=3072, bias=False)
+              (wo): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 32.34 ms, 0.73% latency, 74.69 GFLOPS, in_features=3072, out_features=768, bias=False)
+              (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 54.36 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+              (act): ReLU(0, 0.00% Params, 0 MACs, 0.00% MACs, 3.5 ms, 0.08% latency, 449.21 MFLOPS, )
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.92 ms, 0.07% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 41.48 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+        )
+      )
+      (7): T5Block(
+        9.44 M, 4.23% Params, 5.03 GMACs, 4.28% MACs, 384.19 ms, 8.73% latency, 26.21 GFLOPS, 
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 144.66 ms, 3.29% latency, 18.1 GFLOPS, 
+            (SelfAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 141.74 ms, 3.22% latency, 18.47 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.34 ms, 0.19% latency, 72.4 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.3 ms, 0.19% latency, 72.74 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.62 ms, 0.20% latency, 70.09 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 37.87 ms, 0.86% latency, 15.95 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.29 ms, 0.05% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 53.88 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (1): T5LayerCrossAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 139.13 ms, 3.16% latency, 18.82 GFLOPS, 
+            (EncDecAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 124.97 ms, 2.84% latency, 20.95 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 19.85 ms, 0.45% latency, 30.43 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 12.53 ms, 0.28% latency, 48.19 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 37.48 ms, 0.85% latency, 16.12 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 13.19 ms, 0.30% latency, 45.79 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 13.52 ms, 0.31% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 58.65 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (2): T5LayerFF(
+            4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 100.18 ms, 2.28% latency, 48.25 GFLOPS, 
+            (DenseReluDense): T5DenseActDense(
+              4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 95.06 ms, 2.16% latency, 50.85 GFLOPS, 
+              (wi): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 60.86 ms, 1.38% latency, 39.7 GFLOPS, in_features=768, out_features=3072, bias=False)
+              (wo): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 30.63 ms, 0.70% latency, 78.88 GFLOPS, in_features=3072, out_features=768, bias=False)
+              (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 45.78 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+              (act): ReLU(0, 0.00% Params, 0 MACs, 0.00% MACs, 3.36 ms, 0.08% latency, 467.91 MFLOPS, )
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 4.57 ms, 0.10% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 49.11 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+        )
+      )
+      (8): T5Block(
+        9.44 M, 4.23% Params, 5.03 GMACs, 4.28% MACs, 179.54 ms, 4.08% latency, 56.08 GFLOPS, 
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 52.59 ms, 1.19% latency, 49.78 GFLOPS, 
+            (SelfAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 50.0 ms, 1.14% latency, 52.36 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.37 ms, 0.19% latency, 72.13 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 9.15 ms, 0.21% latency, 66.01 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 9.19 ms, 0.21% latency, 65.7 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.82 ms, 0.20% latency, 68.5 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.11 ms, 0.05% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 41.72 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (1): T5LayerCrossAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 49.78 ms, 1.13% latency, 52.59 GFLOPS, 
+            (EncDecAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 46.57 ms, 1.06% latency, 56.22 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.32 ms, 0.19% latency, 72.61 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.32 ms, 0.19% latency, 72.56 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.17 ms, 0.19% latency, 73.92 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.31 ms, 0.19% latency, 72.7 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.76 ms, 0.06% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 40.29 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (2): T5LayerFF(
+            4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 77.0 ms, 1.75% latency, 62.78 GFLOPS, 
+            (DenseReluDense): T5DenseActDense(
+              4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 73.79 ms, 1.68% latency, 65.5 GFLOPS, 
+              (wi): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 37.8 ms, 0.86% latency, 63.92 GFLOPS, in_features=768, out_features=3072, bias=False)
+              (wo): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 31.97 ms, 0.73% latency, 75.57 GFLOPS, in_features=3072, out_features=768, bias=False)
+              (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 44.58 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+              (act): ReLU(0, 0.00% Params, 0 MACs, 0.00% MACs, 3.81 ms, 0.09% latency, 412.32 MFLOPS, )
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.69 ms, 0.06% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 40.05 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+        )
+      )
+      (9): T5Block(
+        9.44 M, 4.23% Params, 5.03 GMACs, 4.28% MACs, 184.55 ms, 4.19% latency, 54.56 GFLOPS, 
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 60.5 ms, 1.37% latency, 43.28 GFLOPS, 
+            (SelfAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 57.87 ms, 1.31% latency, 45.24 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 9.56 ms, 0.22% latency, 63.18 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 11.08 ms, 0.25% latency, 54.52 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 12.68 ms, 0.29% latency, 47.65 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.34 ms, 0.19% latency, 72.43 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.17 ms, 0.05% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 39.58 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (1): T5LayerCrossAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 51.64 ms, 1.17% latency, 50.7 GFLOPS, 
+            (EncDecAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 48.17 ms, 1.09% latency, 54.35 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 9.53 ms, 0.22% latency, 63.37 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 9.75 ms, 0.22% latency, 61.92 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.03 ms, 0.18% latency, 75.26 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.3 ms, 0.19% latency, 72.78 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.97 ms, 0.07% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 41.25 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (2): T5LayerFF(
+            4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 72.23 ms, 1.64% latency, 66.92 GFLOPS, 
+            (DenseReluDense): T5DenseActDense(
+              4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 68.71 ms, 1.56% latency, 70.35 GFLOPS, 
+              (wi): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 35.1 ms, 0.80% latency, 68.84 GFLOPS, in_features=768, out_features=3072, bias=False)
+              (wo): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 29.96 ms, 0.68% latency, 80.65 GFLOPS, in_features=3072, out_features=768, bias=False)
+              (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 55.55 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+              (act): ReLU(0, 0.00% Params, 0 MACs, 0.00% MACs, 3.44 ms, 0.08% latency, 457.62 MFLOPS, )
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 3.02 ms, 0.07% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 37.91 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+        )
+      )
+      (10): T5Block(
+        9.44 M, 4.23% Params, 5.03 GMACs, 4.28% MACs, 227.95 ms, 5.18% latency, 44.17 GFLOPS, 
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 52.86 ms, 1.20% latency, 49.53 GFLOPS, 
+            (SelfAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 50.28 ms, 1.14% latency, 52.07 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 7.9 ms, 0.18% latency, 76.49 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 10.77 ms, 0.24% latency, 56.06 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.69 ms, 0.20% latency, 69.52 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.77 ms, 0.20% latency, 68.85 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.1 ms, 0.05% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 45.54 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (1): T5LayerCrossAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 52.68 ms, 1.20% latency, 49.7 GFLOPS, 
+            (EncDecAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 48.71 ms, 1.11% latency, 53.75 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 9.29 ms, 0.21% latency, 65.03 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.6 ms, 0.20% latency, 70.2 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.82 ms, 0.20% latency, 68.49 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 8.45 ms, 0.19% latency, 71.49 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 3.48 ms, 0.08% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 40.53 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (2): T5LayerFF(
+            4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 122.22 ms, 2.78% latency, 39.55 GFLOPS, 
+            (DenseReluDense): T5DenseActDense(
+              4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 118.96 ms, 2.70% latency, 40.63 GFLOPS, 
+              (wi): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 33.38 ms, 0.76% latency, 72.38 GFLOPS, in_features=768, out_features=3072, bias=False)
+              (wo): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 81.68 ms, 1.86% latency, 29.58 GFLOPS, in_features=3072, out_features=768, bias=False)
+              (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 59.84 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+              (act): ReLU(0, 0.00% Params, 0 MACs, 0.00% MACs, 3.65 ms, 0.08% latency, 431.1 MFLOPS, )
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.59 ms, 0.06% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 68.19 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+        )
+      )
+      (11): T5Block(
+        9.44 M, 4.23% Params, 5.03 GMACs, 4.28% MACs, 320.04 ms, 7.27% latency, 31.46 GFLOPS, 
+        (layer): ModuleList(
+          (0): T5LayerSelfAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 173.21 ms, 3.93% latency, 15.12 GFLOPS, 
+            (SelfAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 162.73 ms, 3.70% latency, 16.09 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 33.69 ms, 0.77% latency, 17.93 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 31.84 ms, 0.72% latency, 18.97 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 44.33 ms, 1.01% latency, 13.63 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 14.81 ms, 0.34% latency, 40.78 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 9.87 ms, 0.22% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 58.41 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (1): T5LayerCrossAttention(
+            2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 72.96 ms, 1.66% latency, 35.88 GFLOPS, 
+            (EncDecAttention): T5Attention(
+              2.36 M, 1.06% Params, 1.31 GMACs, 1.11% MACs, 69.03 ms, 1.57% latency, 37.93 GFLOPS, 
+              (q): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 14.42 ms, 0.33% latency, 41.89 GFLOPS, in_features=768, out_features=768, bias=False)
+              (k): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 14.6 ms, 0.33% latency, 41.38 GFLOPS, in_features=768, out_features=768, bias=False)
+              (v): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 17.52 ms, 0.40% latency, 34.47 GFLOPS, in_features=768, out_features=768, bias=False)
+              (o): Linear(589.82 k, 0.26% Params, 301.99 MMACs, 0.26% MACs, 9.97 ms, 0.23% latency, 60.59 GFLOPS, in_features=768, out_features=768, bias=False)
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 3.43 ms, 0.08% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 41.48 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+          (2): T5LayerFF(
+            4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 73.67 ms, 1.67% latency, 65.61 GFLOPS, 
+            (DenseReluDense): T5DenseActDense(
+              4.72 M, 2.12% Params, 2.42 GMACs, 2.05% MACs, 70.38 ms, 1.60% latency, 68.68 GFLOPS, 
+              (wi): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 34.84 ms, 0.79% latency, 69.34 GFLOPS, in_features=768, out_features=3072, bias=False)
+              (wo): Linear(2.36 M, 1.06% Params, 1.21 GMACs, 1.03% MACs, 32.06 ms, 0.73% latency, 75.36 GFLOPS, in_features=3072, out_features=768, bias=False)
+              (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 41.48 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+              (act): ReLU(0, 0.00% Params, 0 MACs, 0.00% MACs, 3.27 ms, 0.07% latency, 481.57 MFLOPS, )
+            )
+            (layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.76 ms, 0.06% latency, 0.0 FLOPS, )
+            (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 60.56 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          )
+        )
+      )
+    )
+    (final_layer_norm): T5LayerNorm(768, 0.00% Params, 0 MACs, 0.00% MACs, 2.72 ms, 0.06% latency, 0.0 FLOPS, )
+    (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 96.8 us, 0.00% latency, 0.0 FLOPS, p=0.1, inplace=False)
+  )
+  (lm_head): Linear(24.67 M, 11.07% Params, 12.63 GMACs, 10.73% MACs, 357.89 ms, 8.13% latency, 70.6 GFLOPS, in_features=768, out_features=32128, bias=False)
+)
+------------------------------------------------------------------------------
