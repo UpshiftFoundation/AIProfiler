@@ -1,0 +1,291 @@
+
+-------------------------- DeepSpeed Flops Profiler --------------------------
+Profile Summary at step 10:
+Notations:
+data parallel size (dp_size), model parallel size(mp_size),
+number of parameters (params), number of multiply-accumulate operations(MACs),
+number of floating-point operations (flops), floating-point operations per second (FLOPS),
+fwd latency (forward propagation latency), bwd latency (backward propagation latency),
+step (weights update latency), iter latency (sum of fwd, bwd and step latency)
+
+params per gpu:                                               163.04 M
+params of model = params per GPU * mp_size:                   163.04 M
+fwd MACs per GPU:                                             223.13 GMACs
+fwd flops per GPU:                                            446.44 G
+fwd flops of model = fwd flops per GPU * mp_size:             446.44 G
+fwd latency:                                                  164.73 ms
+fwd FLOPS per GPU = fwd flops per GPU / fwd latency:          2.71 TFLOPS
+
+----------------------------- Aggregated Profile per GPU -----------------------------
+Top 1 modules in terms of params, MACs or fwd latency at different model depths:
+depth 0:
+    params      - {'GPT2LMHeadModel': '163.04 M'}
+    MACs        - {'GPT2LMHeadModel': '223.13 GMACs'}
+    fwd latency - {'GPT2LMHeadModel': '164.73 ms'}
+depth 1:
+    params      - {'GPT2Model': '124.44 M'}
+    MACs        - {'GPT2Model': '183.61 GMACs'}
+    fwd latency - {'GPT2Model': '164.21 ms'}
+depth 2:
+    params      - {'ModuleList': '85.05 M'}
+    MACs        - {'ModuleList': '183.61 GMACs'}
+    fwd latency - {'ModuleList': '159.92 ms'}
+depth 3:
+    params      - {'GPT2Block': '85.05 M'}
+    MACs        - {'GPT2Block': '183.61 GMACs'}
+    fwd latency - {'GPT2Block': '159.92 ms'}
+depth 4:
+    params      - {'GPT2MLP': '56.67 M'}
+    MACs        - {'GPT2MLP': '115.96 GMACs'}
+    fwd latency - {'GPT2Attention': '57.28 ms'}
+
+------------------------------ Detailed Profile per GPU ------------------------------
+Each module profile is listed after its name in the following order: 
+params, percentage of total params, MACs, percentage of total MACs, fwd latency, percentage of total fwd latency, fwd FLOPS
+
+Note: 1. A module can have torch.nn.module or torch.nn.functional to compute logits (e.g. CrossEntropyLoss). They are not counted as submodules, thus not to be printed out. However they make up the difference between a parent's MACs (or latency) and the sum of its submodules'.
+2. Number of floating-point operations is a theoretical estimation, thus FLOPS computed using that could be larger than the maximum system throughput.
+3. The fwd latency listed in the top module's profile is directly captured at the module forward function in PyTorch, thus it's less than the fwd latency shown above which is captured in DeepSpeed.
+
+GPT2LMHeadModel(
+  163.04 M, 100.00% Params, 223.13 GMACs, 100.00% MACs, 164.73 ms, 100.00% latency, 2.71 TFLOPS, 
+  (transformer): GPT2Model(
+    124.44 M, 76.33% Params, 183.61 GMACs, 82.29% MACs, 164.21 ms, 99.69% latency, 2.24 TFLOPS, 
+    (wte): Embedding(38.6 M, 23.67% Params, 0 MACs, 0.00% MACs, 244.38 us, 0.15% latency, 0.0 FLOPS, 50257, 768)
+    (wpe): Embedding(786.43 k, 0.48% Params, 0 MACs, 0.00% MACs, 185.01 us, 0.11% latency, 0.0 FLOPS, 1024, 768)
+    (drop): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 57.46 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+    (h): ModuleList(
+      (0): GPT2Block(
+        7.09 M, 4.35% Params, 15.3 GMACs, 6.86% MACs, 11.65 ms, 7.07% latency, 2.63 TFLOPS, 
+        (ln_1): LayerNorm(1.54 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.57 ms, 0.95% latency, 2.51 GFLOPS, (768,), eps=1e-05, elementwise_affine=True)
+        (attn): GPT2Attention(
+          2.36 M, 1.45% Params, 5.64 GMACs, 2.53% MACs, 4.26 ms, 2.59% latency, 2.65 TFLOPS, 
+          (c_attn): Conv1D(1.77 M, 1.09% Params, 3.62 GMACs, 1.62% MACs, 812.53 us, 0.49% latency, 8.92 TFLOPS, )
+          (c_proj): Conv1D(590.59 k, 0.36% Params, 1.21 GMACs, 0.54% MACs, 884.77 us, 0.54% latency, 2.73 TFLOPS, )
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 71.05 us, 0.04% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 46.01 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(1.54 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.84 ms, 1.12% latency, 2.13 GFLOPS, (768,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPT2MLP(
+          4.72 M, 2.90% Params, 9.66 GMACs, 4.33% MACs, 3.33 ms, 2.02% latency, 5.81 TFLOPS, 
+          (c_fc): Conv1D(2.36 M, 1.45% Params, 4.83 GMACs, 2.17% MACs, 855.45 us, 0.52% latency, 11.3 TFLOPS, )
+          (c_proj): Conv1D(2.36 M, 1.45% Params, 4.83 GMACs, 2.17% MACs, 824.45 us, 0.50% latency, 11.72 TFLOPS, )
+          (act): NewGELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 1.42 ms, 0.86% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 46.49 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (1): GPT2Block(
+        7.09 M, 4.35% Params, 15.3 GMACs, 6.86% MACs, 11.56 ms, 7.02% latency, 2.65 TFLOPS, 
+        (ln_1): LayerNorm(1.54 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.55 ms, 0.94% latency, 2.54 GFLOPS, (768,), eps=1e-05, elementwise_affine=True)
+        (attn): GPT2Attention(
+          2.36 M, 1.45% Params, 5.64 GMACs, 2.53% MACs, 4.32 ms, 2.62% latency, 2.61 TFLOPS, 
+          (c_attn): Conv1D(1.77 M, 1.09% Params, 3.62 GMACs, 1.62% MACs, 834.47 us, 0.51% latency, 8.69 TFLOPS, )
+          (c_proj): Conv1D(590.59 k, 0.36% Params, 1.21 GMACs, 0.54% MACs, 868.32 us, 0.53% latency, 2.78 TFLOPS, )
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 54.6 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 47.21 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(1.54 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.72 ms, 1.04% latency, 2.29 GFLOPS, (768,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPT2MLP(
+          4.72 M, 2.90% Params, 9.66 GMACs, 4.33% MACs, 3.29 ms, 2.00% latency, 5.87 TFLOPS, 
+          (c_fc): Conv1D(2.36 M, 1.45% Params, 4.83 GMACs, 2.17% MACs, 783.44 us, 0.48% latency, 12.33 TFLOPS, )
+          (c_proj): Conv1D(2.36 M, 1.45% Params, 4.83 GMACs, 2.17% MACs, 834.94 us, 0.51% latency, 11.57 TFLOPS, )
+          (act): NewGELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 1.45 ms, 0.88% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 46.73 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (2): GPT2Block(
+        7.09 M, 4.35% Params, 15.3 GMACs, 6.86% MACs, 11.41 ms, 6.93% latency, 2.68 TFLOPS, 
+        (ln_1): LayerNorm(1.54 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.54 ms, 0.94% latency, 2.55 GFLOPS, (768,), eps=1e-05, elementwise_affine=True)
+        (attn): GPT2Attention(
+          2.36 M, 1.45% Params, 5.64 GMACs, 2.53% MACs, 4.42 ms, 2.68% latency, 2.55 TFLOPS, 
+          (c_attn): Conv1D(1.77 M, 1.09% Params, 3.62 GMACs, 1.62% MACs, 817.54 us, 0.50% latency, 8.87 TFLOPS, )
+          (c_proj): Conv1D(590.59 k, 0.36% Params, 1.21 GMACs, 0.54% MACs, 906.47 us, 0.55% latency, 2.67 TFLOPS, )
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 54.84 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 46.97 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(1.54 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.6 ms, 0.97% latency, 2.46 GFLOPS, (768,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPT2MLP(
+          4.72 M, 2.90% Params, 9.66 GMACs, 4.33% MACs, 3.18 ms, 1.93% latency, 6.08 TFLOPS, 
+          (c_fc): Conv1D(2.36 M, 1.45% Params, 4.83 GMACs, 2.17% MACs, 791.55 us, 0.48% latency, 12.21 TFLOPS, )
+          (c_proj): Conv1D(2.36 M, 1.45% Params, 4.83 GMACs, 2.17% MACs, 826.36 us, 0.50% latency, 11.69 TFLOPS, )
+          (act): NewGELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 1.35 ms, 0.82% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 45.3 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (3): GPT2Block(
+        7.09 M, 4.35% Params, 15.3 GMACs, 6.86% MACs, 12.16 ms, 7.38% latency, 2.52 TFLOPS, 
+        (ln_1): LayerNorm(1.54 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.71 ms, 1.04% latency, 2.29 GFLOPS, (768,), eps=1e-05, elementwise_affine=True)
+        (attn): GPT2Attention(
+          2.36 M, 1.45% Params, 5.64 GMACs, 2.53% MACs, 4.29 ms, 2.60% latency, 2.63 TFLOPS, 
+          (c_attn): Conv1D(1.77 M, 1.09% Params, 3.62 GMACs, 1.62% MACs, 833.03 us, 0.51% latency, 8.7 TFLOPS, )
+          (c_proj): Conv1D(590.59 k, 0.36% Params, 1.21 GMACs, 0.54% MACs, 803.95 us, 0.49% latency, 3.01 TFLOPS, )
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 54.36 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 51.02 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(1.54 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.58 ms, 0.96% latency, 2.49 GFLOPS, (768,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPT2MLP(
+          4.72 M, 2.90% Params, 9.66 GMACs, 4.33% MACs, 3.85 ms, 2.33% latency, 5.03 TFLOPS, 
+          (c_fc): Conv1D(2.36 M, 1.45% Params, 4.83 GMACs, 2.17% MACs, 897.41 us, 0.54% latency, 10.77 TFLOPS, )
+          (c_proj): Conv1D(2.36 M, 1.45% Params, 4.83 GMACs, 2.17% MACs, 918.39 us, 0.56% latency, 10.52 TFLOPS, )
+          (act): NewGELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 1.75 ms, 1.06% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 49.83 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (4): GPT2Block(
+        7.09 M, 4.35% Params, 15.3 GMACs, 6.86% MACs, 13.38 ms, 8.12% latency, 2.29 TFLOPS, 
+        (ln_1): LayerNorm(1.54 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.94 ms, 1.18% latency, 2.03 GFLOPS, (768,), eps=1e-05, elementwise_affine=True)
+        (attn): GPT2Attention(
+          2.36 M, 1.45% Params, 5.64 GMACs, 2.53% MACs, 5.02 ms, 3.05% latency, 2.25 TFLOPS, 
+          (c_attn): Conv1D(1.77 M, 1.09% Params, 3.62 GMACs, 1.62% MACs, 1.01 ms, 0.61% latency, 7.18 TFLOPS, )
+          (c_proj): Conv1D(590.59 k, 0.36% Params, 1.21 GMACs, 0.54% MACs, 958.92 us, 0.58% latency, 2.52 TFLOPS, )
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 62.7 us, 0.04% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 51.02 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(1.54 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.74 ms, 1.06% latency, 2.26 GFLOPS, (768,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPT2MLP(
+          4.72 M, 2.90% Params, 9.66 GMACs, 4.33% MACs, 3.92 ms, 2.38% latency, 4.93 TFLOPS, 
+          (c_fc): Conv1D(2.36 M, 1.45% Params, 4.83 GMACs, 2.17% MACs, 935.08 us, 0.57% latency, 10.33 TFLOPS, )
+          (c_proj): Conv1D(2.36 M, 1.45% Params, 4.83 GMACs, 2.17% MACs, 962.73 us, 0.58% latency, 10.04 TFLOPS, )
+          (act): NewGELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 1.78 ms, 1.08% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 51.26 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (5): GPT2Block(
+        7.09 M, 4.35% Params, 15.3 GMACs, 6.86% MACs, 13.69 ms, 8.31% latency, 2.24 TFLOPS, 
+        (ln_1): LayerNorm(1.54 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.84 ms, 1.12% latency, 2.13 GFLOPS, (768,), eps=1e-05, elementwise_affine=True)
+        (attn): GPT2Attention(
+          2.36 M, 1.45% Params, 5.64 GMACs, 2.53% MACs, 5.22 ms, 3.17% latency, 2.16 TFLOPS, 
+          (c_attn): Conv1D(1.77 M, 1.09% Params, 3.62 GMACs, 1.62% MACs, 990.39 us, 0.60% latency, 7.32 TFLOPS, )
+          (c_proj): Conv1D(590.59 k, 0.36% Params, 1.21 GMACs, 0.54% MACs, 1.07 ms, 0.65% latency, 2.25 TFLOPS, )
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 64.37 us, 0.04% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 53.88 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(1.54 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.77 ms, 1.07% latency, 2.22 GFLOPS, (768,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPT2MLP(
+          4.72 M, 2.90% Params, 9.66 GMACs, 4.33% MACs, 4.09 ms, 2.48% latency, 4.73 TFLOPS, 
+          (c_fc): Conv1D(2.36 M, 1.45% Params, 4.83 GMACs, 2.17% MACs, 952.96 us, 0.58% latency, 10.14 TFLOPS, )
+          (c_proj): Conv1D(2.36 M, 1.45% Params, 4.83 GMACs, 2.17% MACs, 946.28 us, 0.57% latency, 10.21 TFLOPS, )
+          (act): NewGELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 1.89 ms, 1.15% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 55.55 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (6): GPT2Block(
+        7.09 M, 4.35% Params, 15.3 GMACs, 6.86% MACs, 13.27 ms, 8.05% latency, 2.31 TFLOPS, 
+        (ln_1): LayerNorm(1.54 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.86 ms, 1.13% latency, 2.11 GFLOPS, (768,), eps=1e-05, elementwise_affine=True)
+        (attn): GPT2Attention(
+          2.36 M, 1.45% Params, 5.64 GMACs, 2.53% MACs, 5.03 ms, 3.06% latency, 2.24 TFLOPS, 
+          (c_attn): Conv1D(1.77 M, 1.09% Params, 3.62 GMACs, 1.62% MACs, 1.01 ms, 0.61% latency, 7.21 TFLOPS, )
+          (c_proj): Conv1D(590.59 k, 0.36% Params, 1.21 GMACs, 0.54% MACs, 968.22 us, 0.59% latency, 2.5 TFLOPS, )
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 62.23 us, 0.04% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 54.84 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(1.54 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.77 ms, 1.07% latency, 2.22 GFLOPS, (768,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPT2MLP(
+          4.72 M, 2.90% Params, 9.66 GMACs, 4.33% MACs, 3.93 ms, 2.38% latency, 4.92 TFLOPS, 
+          (c_fc): Conv1D(2.36 M, 1.45% Params, 4.83 GMACs, 2.17% MACs, 988.96 us, 0.60% latency, 9.77 TFLOPS, )
+          (c_proj): Conv1D(2.36 M, 1.45% Params, 4.83 GMACs, 2.17% MACs, 888.11 us, 0.54% latency, 10.88 TFLOPS, )
+          (act): NewGELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 1.81 ms, 1.10% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 42.92 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (7): GPT2Block(
+        7.09 M, 4.35% Params, 15.3 GMACs, 6.86% MACs, 13.31 ms, 8.08% latency, 2.3 TFLOPS, 
+        (ln_1): LayerNorm(1.54 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.65 ms, 1.00% latency, 2.38 GFLOPS, (768,), eps=1e-05, elementwise_affine=True)
+        (attn): GPT2Attention(
+          2.36 M, 1.45% Params, 5.64 GMACs, 2.53% MACs, 4.76 ms, 2.89% latency, 2.37 TFLOPS, 
+          (c_attn): Conv1D(1.77 M, 1.09% Params, 3.62 GMACs, 1.62% MACs, 947.24 us, 0.58% latency, 7.65 TFLOPS, )
+          (c_proj): Conv1D(590.59 k, 0.36% Params, 1.21 GMACs, 0.54% MACs, 861.64 us, 0.52% latency, 2.8 TFLOPS, )
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 59.13 us, 0.04% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 50.78 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(1.54 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.82 ms, 1.11% latency, 2.16 GFLOPS, (768,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPT2MLP(
+          4.72 M, 2.90% Params, 9.66 GMACs, 4.33% MACs, 4.29 ms, 2.60% latency, 4.51 TFLOPS, 
+          (c_fc): Conv1D(2.36 M, 1.45% Params, 4.83 GMACs, 2.17% MACs, 973.94 us, 0.59% latency, 9.92 TFLOPS, )
+          (c_proj): Conv1D(2.36 M, 1.45% Params, 4.83 GMACs, 2.17% MACs, 1.14 ms, 0.69% latency, 8.5 TFLOPS, )
+          (act): NewGELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 1.9 ms, 1.16% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 55.79 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (8): GPT2Block(
+        7.09 M, 4.35% Params, 15.3 GMACs, 6.86% MACs, 12.24 ms, 7.43% latency, 2.5 TFLOPS, 
+        (ln_1): LayerNorm(1.54 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.82 ms, 1.11% latency, 2.16 GFLOPS, (768,), eps=1e-05, elementwise_affine=True)
+        (attn): GPT2Attention(
+          2.36 M, 1.45% Params, 5.64 GMACs, 2.53% MACs, 4.77 ms, 2.90% latency, 2.36 TFLOPS, 
+          (c_attn): Conv1D(1.77 M, 1.09% Params, 3.62 GMACs, 1.62% MACs, 972.75 us, 0.59% latency, 7.45 TFLOPS, )
+          (c_proj): Conv1D(590.59 k, 0.36% Params, 1.21 GMACs, 0.54% MACs, 868.8 us, 0.53% latency, 2.78 TFLOPS, )
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 58.65 us, 0.04% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 45.3 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(1.54 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.59 ms, 0.96% latency, 2.48 GFLOPS, (768,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPT2MLP(
+          4.72 M, 2.90% Params, 9.66 GMACs, 4.33% MACs, 3.28 ms, 1.99% latency, 5.89 TFLOPS, 
+          (c_fc): Conv1D(2.36 M, 1.45% Params, 4.83 GMACs, 2.17% MACs, 760.32 us, 0.46% latency, 12.71 TFLOPS, )
+          (c_proj): Conv1D(2.36 M, 1.45% Params, 4.83 GMACs, 2.17% MACs, 866.41 us, 0.53% latency, 11.15 TFLOPS, )
+          (act): NewGELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 1.42 ms, 0.86% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 48.4 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (9): GPT2Block(
+        7.09 M, 4.35% Params, 15.3 GMACs, 6.86% MACs, 21.73 ms, 13.19% latency, 1.41 TFLOPS, 
+        (ln_1): LayerNorm(1.54 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.9 ms, 1.16% latency, 2.06 GFLOPS, (768,), eps=1e-05, elementwise_affine=True)
+        (attn): GPT2Attention(
+          2.36 M, 1.45% Params, 5.64 GMACs, 2.53% MACs, 6.52 ms, 3.96% latency, 1.73 TFLOPS, 
+          (c_attn): Conv1D(1.77 M, 1.09% Params, 3.62 GMACs, 1.62% MACs, 1.04 ms, 0.63% latency, 6.95 TFLOPS, )
+          (c_proj): Conv1D(590.59 k, 0.36% Params, 1.21 GMACs, 0.54% MACs, 1.14 ms, 0.69% latency, 2.13 TFLOPS, )
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 78.92 us, 0.05% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 66.04 us, 0.04% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(1.54 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.86 ms, 1.13% latency, 2.11 GFLOPS, (768,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPT2MLP(
+          4.72 M, 2.90% Params, 9.66 GMACs, 4.33% MACs, 10.6 ms, 6.44% latency, 1.82 TFLOPS, 
+          (c_fc): Conv1D(2.36 M, 1.45% Params, 4.83 GMACs, 2.17% MACs, 1.03 ms, 0.63% latency, 9.38 TFLOPS, )
+          (c_proj): Conv1D(2.36 M, 1.45% Params, 4.83 GMACs, 2.17% MACs, 785.35 us, 0.48% latency, 12.3 TFLOPS, )
+          (act): NewGELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 8.54 ms, 5.19% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 46.73 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (10): GPT2Block(
+        7.09 M, 4.35% Params, 15.3 GMACs, 6.86% MACs, 13.97 ms, 8.48% latency, 2.19 TFLOPS, 
+        (ln_1): LayerNorm(1.54 k, 0.00% Params, 0 MACs, 0.00% MACs, 3.69 ms, 2.24% latency, 1.07 GFLOPS, (768,), eps=1e-05, elementwise_affine=True)
+        (attn): GPT2Attention(
+          2.36 M, 1.45% Params, 5.64 GMACs, 2.53% MACs, 4.58 ms, 2.78% latency, 2.46 TFLOPS, 
+          (c_attn): Conv1D(1.77 M, 1.09% Params, 3.62 GMACs, 1.62% MACs, 1.06 ms, 0.65% latency, 6.82 TFLOPS, )
+          (c_proj): Conv1D(590.59 k, 0.36% Params, 1.21 GMACs, 0.54% MACs, 823.5 us, 0.50% latency, 2.93 TFLOPS, )
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 51.98 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 45.3 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(1.54 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.56 ms, 0.94% latency, 2.53 GFLOPS, (768,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPT2MLP(
+          4.72 M, 2.90% Params, 9.66 GMACs, 4.33% MACs, 3.41 ms, 2.07% latency, 5.67 TFLOPS, 
+          (c_fc): Conv1D(2.36 M, 1.45% Params, 4.83 GMACs, 2.17% MACs, 841.38 us, 0.51% latency, 11.49 TFLOPS, )
+          (c_proj): Conv1D(2.36 M, 1.45% Params, 4.83 GMACs, 2.17% MACs, 853.78 us, 0.52% latency, 11.32 TFLOPS, )
+          (act): NewGELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 1.49 ms, 0.90% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 46.97 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (11): GPT2Block(
+        7.09 M, 4.35% Params, 15.3 GMACs, 6.86% MACs, 11.56 ms, 7.02% latency, 2.65 TFLOPS, 
+        (ln_1): LayerNorm(1.54 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.56 ms, 0.95% latency, 2.51 GFLOPS, (768,), eps=1e-05, elementwise_affine=True)
+        (attn): GPT2Attention(
+          2.36 M, 1.45% Params, 5.64 GMACs, 2.53% MACs, 4.09 ms, 2.48% latency, 2.76 TFLOPS, 
+          (c_attn): Conv1D(1.77 M, 1.09% Params, 3.62 GMACs, 1.62% MACs, 821.59 us, 0.50% latency, 8.82 TFLOPS, )
+          (c_proj): Conv1D(590.59 k, 0.36% Params, 1.21 GMACs, 0.54% MACs, 803.47 us, 0.49% latency, 3.01 TFLOPS, )
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 50.31 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 44.82 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(1.54 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.57 ms, 0.95% latency, 2.51 GFLOPS, (768,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPT2MLP(
+          4.72 M, 2.90% Params, 9.66 GMACs, 4.33% MACs, 3.67 ms, 2.23% latency, 5.27 TFLOPS, 
+          (c_fc): Conv1D(2.36 M, 1.45% Params, 4.83 GMACs, 2.17% MACs, 831.6 us, 0.50% latency, 11.62 TFLOPS, )
+          (c_proj): Conv1D(2.36 M, 1.45% Params, 4.83 GMACs, 2.17% MACs, 931.5 us, 0.57% latency, 10.37 TFLOPS, )
+          (act): NewGELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 1.68 ms, 1.02% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 45.3 us, 0.03% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+    )
+    (ln_f): LayerNorm(1.54 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.78 ms, 1.08% latency, 2.2 GFLOPS, (768,), eps=1e-05, elementwise_affine=True)
+  )
+  (lm_head): Linear(38.6 M, 23.67% Params, 39.52 GMACs, 17.71% MACs, 283.72 us, 0.17% latency, 278.61 TFLOPS, in_features=768, out_features=50257, bias=False)
+)
+------------------------------------------------------------------------------

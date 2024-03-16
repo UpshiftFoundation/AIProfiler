@@ -1,0 +1,823 @@
+
+-------------------------- DeepSpeed Flops Profiler --------------------------
+Profile Summary at step 10:
+Notations:
+data parallel size (dp_size), model parallel size(mp_size),
+number of parameters (params), number of multiply-accumulate operations(MACs),
+number of floating-point operations (flops), floating-point operations per second (FLOPS),
+fwd latency (forward propagation latency), bwd latency (backward propagation latency),
+step (weights update latency), iter latency (sum of fwd, bwd and step latency)
+
+params per gpu:                                               15819.45 M
+params of model = params per GPU * mp_size:                   15819.45 M
+fwd MACs per GPU:                                             31619.55 GMACs
+fwd flops per GPU:                                            63243.66 G
+fwd flops of model = fwd flops per GPU * mp_size:             63243.66 G
+fwd latency:                                                  442.26 ms
+fwd FLOPS per GPU = fwd flops per GPU / fwd latency:          143.0 TFLOPS
+
+----------------------------- Aggregated Profile per GPU -----------------------------
+Top 1 modules in terms of params, MACs or fwd latency at different model depths:
+depth 0:
+    params      - {'GPTBigCodeForCausalLM': '15819.45 M'}
+    MACs        - {'GPTBigCodeForCausalLM': '31619.55 GMACs'}
+    fwd latency - {'GPTBigCodeForCausalLM': '442.26 ms'}
+depth 1:
+    params      - {'GPTBigCodeModel': '15517.46 M'}
+    MACs        - {'GPTBigCodeModel': '31310.31 GMACs'}
+    fwd latency - {'GPTBigCodeModel': '441.84 ms'}
+depth 2:
+    params      - {'ModuleList': '15165.12 M'}
+    MACs        - {'ModuleList': '31310.31 GMACs'}
+    fwd latency - {'ModuleList': '435.74 ms'}
+depth 3:
+    params      - {'GPTBigCodeBlock': '15165.12 M'}
+    MACs        - {'GPTBigCodeBlock': '31310.31 GMACs'}
+    fwd latency - {'GPTBigCodeBlock': '435.74 ms'}
+depth 4:
+    params      - {'GPTBigCodeMLP': '12080.82 M'}
+    MACs        - {'GPTBigCodeMLP': '24739.01 GMACs'}
+    fwd latency - {'GPTBigCodeAttention': '152.52 ms'}
+
+------------------------------ Detailed Profile per GPU ------------------------------
+Each module profile is listed after its name in the following order: 
+params, percentage of total params, MACs, percentage of total MACs, fwd latency, percentage of total fwd latency, fwd FLOPS
+
+Note: 1. A module can have torch.nn.module or torch.nn.functional to compute logits (e.g. CrossEntropyLoss). They are not counted as submodules, thus not to be printed out. However they make up the difference between a parent's MACs (or latency) and the sum of its submodules'.
+2. Number of floating-point operations is a theoretical estimation, thus FLOPS computed using that could be larger than the maximum system throughput.
+3. The fwd latency listed in the top module's profile is directly captured at the module forward function in PyTorch, thus it's less than the fwd latency shown above which is captured in DeepSpeed.
+
+GPTBigCodeForCausalLM(
+  15819.45 M, 100.00% Params, 31619.55 GMACs, 100.00% MACs, 442.26 ms, 100.00% latency, 143.0 TFLOPS, 
+  (transformer): GPTBigCodeModel(
+    15517.46 M, 98.09% Params, 31310.31 GMACs, 99.02% MACs, 441.84 ms, 99.90% latency, 141.74 TFLOPS, 
+    (wte): Embedding(301.99 M, 1.91% Params, 0 MACs, 0.00% MACs, 272.04 us, 0.06% latency, 0.0 FLOPS, 49152, 6144)
+    (wpe): Embedding(50.33 M, 0.32% Params, 0 MACs, 0.00% MACs, 203.13 us, 0.05% latency, 0.0 FLOPS, 8192, 6144)
+    (drop): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 110.15 us, 0.02% latency, 0.0 FLOPS, p=0.1, inplace=False)
+    (h): ModuleList(
+      (0): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 11.99 ms, 2.71% latency, 130.6 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.92 ms, 0.43% latency, 16.39 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.95 ms, 0.89% latency, 83.12 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 948.91 us, 0.21% latency, 169.73 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 933.65 us, 0.21% latency, 165.61 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 62.7 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 66.04 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.85 ms, 0.42% latency, 17.02 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 3.51 ms, 0.79% latency, 352.17 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 1.19 ms, 0.27% latency, 520.06 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 955.1 us, 0.22% latency, 647.55 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 1.09 ms, 0.25% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 55.31 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (1): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 11.41 ms, 2.58% latency, 137.21 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.74 ms, 0.39% latency, 18.11 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 4.02 ms, 0.91% latency, 81.78 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 935.79 us, 0.21% latency, 172.11 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 931.02 us, 0.21% latency, 166.07 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 63.42 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 53.41 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.57 ms, 0.36% latency, 20.01 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 3.35 ms, 0.76% latency, 369.13 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 858.31 us, 0.19% latency, 720.58 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 936.27 us, 0.21% latency, 660.57 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 1.29 ms, 0.29% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 54.84 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (2): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 11.56 ms, 2.61% latency, 135.42 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.76 ms, 0.40% latency, 17.85 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.99 ms, 0.90% latency, 82.43 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 937.94 us, 0.21% latency, 171.72 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 937.22 us, 0.21% latency, 164.98 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 66.76 us, 0.02% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 52.69 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.82 ms, 0.41% latency, 17.29 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 3.25 ms, 0.74% latency, 380.25 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 919.82 us, 0.21% latency, 672.39 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 940.8 us, 0.21% latency, 657.39 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 1.14 ms, 0.26% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 54.6 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (3): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 11.33 ms, 2.56% latency, 138.17 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.79 ms, 0.40% latency, 17.61 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.91 ms, 0.88% latency, 84.1 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 930.55 us, 0.21% latency, 173.08 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 919.58 us, 0.21% latency, 168.14 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 62.94 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 53.41 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.73 ms, 0.39% latency, 18.15 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 3.13 ms, 0.71% latency, 395.2 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 911.24 us, 0.21% latency, 678.72 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 906.23 us, 0.20% latency, 682.47 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 1.04 ms, 0.24% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 66.76 us, 0.02% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (4): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 11.47 ms, 2.59% latency, 136.49 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.74 ms, 0.39% latency, 18.05 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.99 ms, 0.90% latency, 82.27 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 954.63 us, 0.22% latency, 168.72 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 945.81 us, 0.21% latency, 163.48 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 82.25 us, 0.02% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 52.69 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.79 ms, 0.41% latency, 17.56 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 3.2 ms, 0.72% latency, 386.6 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 926.97 us, 0.21% latency, 667.2 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 945.09 us, 0.21% latency, 654.41 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 1.07 ms, 0.24% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 51.74 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (5): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.71 ms, 2.42% latency, 146.18 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.91 ms, 0.43% latency, 16.48 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.54 ms, 0.80% latency, 92.73 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 843.29 us, 0.19% latency, 190.99 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 875.95 us, 0.20% latency, 176.52 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 54.12 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 56.27 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.59 ms, 0.36% latency, 19.84 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.95 ms, 0.67% latency, 418.87 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 843.52 us, 0.19% latency, 733.2 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 890.02 us, 0.20% latency, 694.9 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 980.14 us, 0.22% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 48.64 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (6): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.01 ms, 2.26% latency, 156.44 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.54 ms, 0.35% latency, 20.37 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.61 ms, 0.82% latency, 91.12 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 838.76 us, 0.19% latency, 192.02 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 795.13 us, 0.18% latency, 194.46 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 59.6 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 64.61 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.44 ms, 0.33% latency, 21.87 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.77 ms, 0.63% latency, 445.76 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 805.85 us, 0.18% latency, 767.48 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 817.78 us, 0.18% latency, 756.29 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 928.88 us, 0.21% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 46.97 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (7): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.04 ms, 2.27% latency, 155.99 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.56 ms, 0.35% latency, 20.18 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.5 ms, 0.79% latency, 93.9 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 832.32 us, 0.19% latency, 193.51 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 798.23 us, 0.18% latency, 193.7 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 56.51 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 60.8 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.53 ms, 0.34% latency, 20.63 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.82 ms, 0.64% latency, 438.45 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 814.2 us, 0.18% latency, 759.61 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 797.03 us, 0.18% latency, 775.97 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 979.66 us, 0.22% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 44.58 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (8): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.03 ms, 2.27% latency, 156.15 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.5 ms, 0.34% latency, 20.93 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.53 ms, 0.80% latency, 93.01 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 826.84 us, 0.19% latency, 194.79 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 821.11 us, 0.19% latency, 188.3 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 65.8 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 50.31 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.53 ms, 0.35% latency, 20.6 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.79 ms, 0.63% latency, 444.08 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 809.67 us, 0.18% latency, 763.86 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 814.2 us, 0.18% latency, 759.61 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 932.46 us, 0.21% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 47.45 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (9): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.13 ms, 2.29% latency, 154.56 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.52 ms, 0.34% latency, 20.73 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.44 ms, 0.78% latency, 95.54 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 826.6 us, 0.19% latency, 194.85 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 771.05 us, 0.17% latency, 200.53 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 64.13 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 65.57 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.52 ms, 0.34% latency, 20.68 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.97 ms, 0.67% latency, 416.12 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 868.32 us, 0.20% latency, 712.27 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 879.53 us, 0.20% latency, 703.19 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 967.74 us, 0.22% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 47.68 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (10): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 9.99 ms, 2.26% latency, 156.79 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.53 ms, 0.35% latency, 20.59 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.49 ms, 0.79% latency, 94.21 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 825.41 us, 0.19% latency, 195.13 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 827.07 us, 0.19% latency, 186.95 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 56.74 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 45.54 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.65 ms, 0.37% latency, 19.06 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.66 ms, 0.60% latency, 464.97 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 773.19 us, 0.17% latency, 799.9 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 792.03 us, 0.18% latency, 780.88 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 850.68 us, 0.19% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 56.51 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (11): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.31 ms, 2.33% latency, 151.86 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.55 ms, 0.35% latency, 20.33 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.51 ms, 0.79% latency, 93.53 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 817.78 us, 0.18% latency, 196.95 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 827.55 us, 0.19% latency, 186.84 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 56.51 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 47.45 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.59 ms, 0.36% latency, 19.78 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.98 ms, 0.67% latency, 414.82 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 892.4 us, 0.20% latency, 693.05 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 849.01 us, 0.19% latency, 728.47 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 982.76 us, 0.22% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 68.43 us, 0.02% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (12): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.29 ms, 2.33% latency, 152.12 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.69 ms, 0.38% latency, 18.59 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.4 ms, 0.77% latency, 96.53 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 782.73 us, 0.18% latency, 205.77 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 835.9 us, 0.19% latency, 184.97 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 56.03 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 47.45 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.53 ms, 0.35% latency, 20.6 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.99 ms, 0.68% latency, 413.13 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 823.02 us, 0.19% latency, 751.47 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 830.89 us, 0.19% latency, 744.35 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 1.11 ms, 0.25% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 48.4 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (13): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 9.83 ms, 2.22% latency, 159.33 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.56 ms, 0.35% latency, 20.18 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.52 ms, 0.80% latency, 93.32 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 829.22 us, 0.19% latency, 194.23 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 800.37 us, 0.18% latency, 193.18 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 55.79 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 68.9 us, 0.02% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.46 ms, 0.33% latency, 21.58 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.65 ms, 0.60% latency, 466.48 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 770.57 us, 0.17% latency, 802.62 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 777.72 us, 0.18% latency, 795.24 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 889.54 us, 0.20% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 49.11 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (14): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.21 ms, 2.31% latency, 153.41 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.56 ms, 0.35% latency, 20.14 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.63 ms, 0.82% latency, 90.55 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 968.93 us, 0.22% latency, 166.23 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 797.75 us, 0.18% latency, 193.82 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 55.07 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 65.09 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.52 ms, 0.34% latency, 20.67 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.8 ms, 0.63% latency, 441.02 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 808.48 us, 0.18% latency, 764.99 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 825.41 us, 0.19% latency, 749.3 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 945.57 us, 0.21% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 46.25 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (15): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.01 ms, 2.26% latency, 156.36 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.6 ms, 0.36% latency, 19.7 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.38 ms, 0.76% latency, 97.33 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 824.69 us, 0.19% latency, 195.3 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 769.62 us, 0.17% latency, 200.9 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 54.36 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 52.21 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.53 ms, 0.35% latency, 20.53 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.83 ms, 0.64% latency, 436.93 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 813.01 us, 0.18% latency, 760.73 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 830.17 us, 0.19% latency, 745.0 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 962.02 us, 0.22% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 47.45 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (16): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.42 ms, 2.36% latency, 150.19 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.82 ms, 0.41% latency, 17.25 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.49 ms, 0.79% latency, 94.11 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 797.99 us, 0.18% latency, 201.83 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 830.41 us, 0.19% latency, 186.2 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 56.03 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 47.68 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.64 ms, 0.37% latency, 19.16 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.81 ms, 0.64% latency, 440.05 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 877.38 us, 0.20% latency, 704.91 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 775.1 us, 0.18% latency, 797.93 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 934.84 us, 0.21% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 43.87 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (17): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.16 ms, 2.30% latency, 154.16 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.49 ms, 0.34% latency, 21.14 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.57 ms, 0.81% latency, 92.18 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 800.13 us, 0.18% latency, 201.29 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 831.84 us, 0.19% latency, 185.88 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 56.98 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 46.01 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.55 ms, 0.35% latency, 20.26 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.91 ms, 0.66% latency, 425.43 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 895.02 us, 0.20% latency, 691.02 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 829.94 us, 0.19% latency, 745.21 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 954.39 us, 0.22% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 47.92 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (18): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.15 ms, 2.29% latency, 154.31 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.57 ms, 0.35% latency, 20.07 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.49 ms, 0.79% latency, 94.19 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 830.65 us, 0.19% latency, 193.9 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 825.17 us, 0.19% latency, 187.38 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 56.03 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 43.87 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.44 ms, 0.33% latency, 21.79 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 3.0 ms, 0.68% latency, 412.74 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 801.56 us, 0.18% latency, 771.59 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 861.88 us, 0.19% latency, 717.59 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 1.11 ms, 0.25% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 48.88 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (19): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.74 ms, 2.43% latency, 145.8 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.6 ms, 0.36% latency, 19.67 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.83 ms, 0.87% latency, 85.78 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 1.09 ms, 0.25% latency, 148.41 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 838.04 us, 0.19% latency, 184.5 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 57.94 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 46.97 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.75 ms, 0.40% latency, 17.98 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.9 ms, 0.66% latency, 425.99 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 890.97 us, 0.20% latency, 694.16 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 835.42 us, 0.19% latency, 740.32 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 949.38 us, 0.21% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 48.4 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (20): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.16 ms, 2.30% latency, 154.03 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.53 ms, 0.35% latency, 20.58 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.49 ms, 0.79% latency, 94.27 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 787.73 us, 0.18% latency, 204.46 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 832.32 us, 0.19% latency, 185.77 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 57.7 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 46.97 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.55 ms, 0.35% latency, 20.36 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.93 ms, 0.66% latency, 422.38 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 838.76 us, 0.19% latency, 737.37 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 891.92 us, 0.20% latency, 693.42 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 974.89 us, 0.22% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 48.16 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (21): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.02 ms, 2.26% latency, 156.3 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.49 ms, 0.34% latency, 21.12 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.41 ms, 0.77% latency, 96.32 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 821.35 us, 0.19% latency, 196.09 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 822.54 us, 0.19% latency, 187.98 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 59.37 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 46.73 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.56 ms, 0.35% latency, 20.2 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.87 ms, 0.65% latency, 430.8 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 843.52 us, 0.19% latency, 733.2 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 833.51 us, 0.19% latency, 742.01 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 961.78 us, 0.22% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 48.4 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (22): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.64 ms, 2.41% latency, 147.12 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.58 ms, 0.36% latency, 19.97 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.81 ms, 0.86% latency, 86.29 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 947.48 us, 0.21% latency, 169.99 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 910.52 us, 0.21% latency, 169.81 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 60.32 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 51.98 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.65 ms, 0.37% latency, 19.02 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.93 ms, 0.66% latency, 421.53 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 885.49 us, 0.20% latency, 698.46 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 832.56 us, 0.19% latency, 742.86 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 986.1 us, 0.22% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 46.73 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (23): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.73 ms, 2.43% latency, 145.85 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.62 ms, 0.37% latency, 19.39 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.76 ms, 0.85% latency, 87.4 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 867.61 us, 0.20% latency, 185.64 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 915.29 us, 0.21% latency, 168.93 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 59.6 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 56.51 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.7 ms, 0.38% latency, 18.52 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.96 ms, 0.67% latency, 417.42 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 879.76 us, 0.20% latency, 703.0 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 833.51 us, 0.19% latency, 742.01 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 1.01 ms, 0.23% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 48.88 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (24): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.42 ms, 2.36% latency, 150.31 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.58 ms, 0.36% latency, 19.91 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.65 ms, 0.82% latency, 90.14 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 827.07 us, 0.19% latency, 194.74 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 875.0 us, 0.20% latency, 176.71 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 59.6 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 49.59 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.59 ms, 0.36% latency, 19.76 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.86 ms, 0.65% latency, 431.91 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 861.17 us, 0.19% latency, 718.18 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 832.08 us, 0.19% latency, 743.29 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 940.8 us, 0.21% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 48.64 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (25): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.34 ms, 2.34% latency, 151.43 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.58 ms, 0.36% latency, 19.86 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.66 ms, 0.83% latency, 89.74 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 823.74 us, 0.19% latency, 195.53 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 937.46 us, 0.21% latency, 164.93 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 79.87 us, 0.02% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 46.49 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.65 ms, 0.37% latency, 19.09 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.78 ms, 0.63% latency, 445.26 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 813.25 us, 0.18% latency, 760.5 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 791.31 us, 0.18% latency, 781.58 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 924.59 us, 0.21% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 64.61 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (26): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.14 ms, 2.29% latency, 154.37 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.54 ms, 0.35% latency, 20.4 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.59 ms, 0.81% latency, 91.43 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 803.95 us, 0.18% latency, 200.34 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 849.96 us, 0.19% latency, 181.91 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 61.75 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 47.68 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.54 ms, 0.35% latency, 20.36 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.82 ms, 0.64% latency, 438.78 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 833.03 us, 0.19% latency, 742.44 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 811.1 us, 0.18% latency, 762.51 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 950.34 us, 0.21% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 47.45 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (27): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.61 ms, 2.40% latency, 147.57 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.55 ms, 0.35% latency, 20.27 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.66 ms, 0.83% latency, 89.84 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 784.64 us, 0.18% latency, 205.27 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 863.31 us, 0.20% latency, 179.1 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 58.89 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 46.73 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.62 ms, 0.37% latency, 19.39 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 3.03 ms, 0.68% latency, 408.52 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 868.32 us, 0.20% latency, 712.27 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 915.53 us, 0.21% latency, 675.54 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 1.0 ms, 0.23% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 51.02 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (28): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.38 ms, 2.35% latency, 150.89 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.55 ms, 0.35% latency, 20.24 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.65 ms, 0.83% latency, 90.06 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 823.26 us, 0.19% latency, 195.64 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 897.41 us, 0.20% latency, 172.29 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 57.22 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 46.97 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.58 ms, 0.36% latency, 19.89 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.89 ms, 0.65% latency, 427.36 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 829.46 us, 0.19% latency, 745.64 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 875.23 us, 0.20% latency, 706.64 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 948.67 us, 0.21% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 51.5 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (29): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.72 ms, 2.42% latency, 146.08 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.63 ms, 0.37% latency, 19.3 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.63 ms, 0.82% latency, 90.52 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 916.24 us, 0.21% latency, 175.78 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 825.88 us, 0.19% latency, 187.22 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 55.79 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 57.94 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.62 ms, 0.37% latency, 19.41 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 3.09 ms, 0.70% latency, 400.01 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 788.45 us, 0.18% latency, 784.42 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 1.01 ms, 0.23% latency, 613.84 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 1.01 ms, 0.23% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 55.79 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (30): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.41 ms, 2.35% latency, 150.37 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.69 ms, 0.38% latency, 18.62 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.72 ms, 0.84% latency, 88.36 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 957.25 us, 0.22% latency, 168.25 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 877.14 us, 0.20% latency, 176.28 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 58.65 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 48.64 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.52 ms, 0.34% latency, 20.66 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.79 ms, 0.63% latency, 444.08 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 829.7 us, 0.19% latency, 745.42 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 822.31 us, 0.19% latency, 752.12 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 905.75 us, 0.20% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 48.16 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (31): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.23 ms, 2.31% latency, 153.03 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.63 ms, 0.37% latency, 19.33 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.61 ms, 0.82% latency, 91.14 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 923.4 us, 0.21% latency, 174.42 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 802.28 us, 0.18% latency, 192.72 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 69.38 us, 0.02% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 50.54 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.55 ms, 0.35% latency, 20.24 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.76 ms, 0.62% latency, 448.18 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 797.99 us, 0.18% latency, 775.04 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 796.56 us, 0.18% latency, 776.44 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 931.26 us, 0.21% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 45.3 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (32): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.61 ms, 2.40% latency, 147.55 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.59 ms, 0.36% latency, 19.79 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.83 ms, 0.87% latency, 85.84 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 897.17 us, 0.20% latency, 179.52 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 973.94 us, 0.22% latency, 158.76 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 59.84 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 43.87 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.55 ms, 0.35% latency, 20.32 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.99 ms, 0.68% latency, 413.1 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 829.7 us, 0.19% latency, 745.42 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 917.91 us, 0.21% latency, 673.79 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 971.32 us, 0.22% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 50.78 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (33): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.16 ms, 2.30% latency, 154.04 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.67 ms, 0.38% latency, 18.81 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.54 ms, 0.80% latency, 92.73 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 813.72 us, 0.18% latency, 197.93 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 794.89 us, 0.18% latency, 194.52 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 56.98 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 47.21 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.51 ms, 0.34% latency, 20.8 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.78 ms, 0.63% latency, 445.14 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 818.01 us, 0.18% latency, 756.07 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 811.1 us, 0.18% latency, 762.51 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 910.28 us, 0.21% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 47.45 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (34): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.31 ms, 2.33% latency, 151.79 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.52 ms, 0.34% latency, 20.63 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.57 ms, 0.81% latency, 92.03 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 864.03 us, 0.20% latency, 186.41 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 825.64 us, 0.19% latency, 187.27 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 68.19 us, 0.02% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 47.92 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.48 ms, 0.33% latency, 21.29 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.99 ms, 0.68% latency, 413.13 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 811.1 us, 0.18% latency, 762.51 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 937.7 us, 0.21% latency, 659.57 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 967.03 us, 0.22% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 53.64 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (35): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 19.11 ms, 4.32% latency, 81.93 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.52 ms, 0.34% latency, 20.63 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 6.69 ms, 1.51% latency, 49.15 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 816.58 us, 0.18% latency, 197.24 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 874.76 us, 0.20% latency, 176.76 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 56.51 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 48.4 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 4.33 ms, 0.98% latency, 7.26 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 5.9 ms, 1.33% latency, 209.6 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 845.91 us, 0.19% latency, 731.14 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 850.2 us, 0.19% latency, 727.45 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 3.96 ms, 0.90% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 49.11 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (36): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 18.45 ms, 4.17% latency, 84.88 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 4.03 ms, 0.91% latency, 7.81 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 7.71 ms, 1.74% latency, 42.6 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 885.49 us, 0.20% latency, 181.89 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 4.86 ms, 1.10% latency, 31.82 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 77.25 us, 0.02% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 50.78 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 3.0 ms, 0.68% latency, 10.49 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.98 ms, 0.67% latency, 414.59 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 876.67 us, 0.20% latency, 705.49 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 849.72 us, 0.19% latency, 727.85 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 990.15 us, 0.22% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 76.29 us, 0.02% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (37): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.93 ms, 2.47% latency, 143.29 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.72 ms, 0.39% latency, 18.34 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.56 ms, 0.81% latency, 92.24 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 854.25 us, 0.19% latency, 188.54 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 838.04 us, 0.19% latency, 184.5 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 59.13 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 49.83 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.75 ms, 0.40% latency, 17.93 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 3.22 ms, 0.73% latency, 384.56 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 919.1 us, 0.21% latency, 672.91 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 992.3 us, 0.22% latency, 623.28 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 1.07 ms, 0.24% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 47.92 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (38): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.28 ms, 2.32% latency, 152.31 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.61 ms, 0.36% latency, 19.59 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.53 ms, 0.80% latency, 93.0 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 857.59 us, 0.19% latency, 187.81 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 823.26 us, 0.19% latency, 187.81 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 58.41 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 47.92 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.65 ms, 0.37% latency, 19.03 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.84 ms, 0.64% latency, 435.87 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 876.19 us, 0.20% latency, 705.87 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 756.5 us, 0.17% latency, 817.55 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 966.79 us, 0.22% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 55.31 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+      (39): GPTBigCodeBlock(
+        379.13 M, 2.40% Params, 782.76 GMACs, 2.48% MACs, 10.32 ms, 2.33% latency, 151.7 TFLOPS, 
+        (ln_1): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.62 ms, 0.37% latency, 19.36 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (attn): GPTBigCodeAttention(
+          77.08 M, 0.49% Params, 164.28 GMACs, 0.52% MACs, 3.66 ms, 0.83% latency, 89.67 TFLOPS, 
+          (c_attn): Linear(39.33 M, 0.25% Params, 80.53 GMACs, 0.25% MACs, 832.56 us, 0.19% latency, 193.45 TFLOPS, in_features=6144, out_features=6400, bias=True)
+          (c_proj): Linear(37.75 M, 0.24% Params, 77.31 GMACs, 0.24% MACs, 898.12 us, 0.20% latency, 172.16 TFLOPS, in_features=6144, out_features=6144, bias=True)
+          (attn_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 56.98 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+          (resid_dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 46.97 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+        (ln_2): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.59 ms, 0.36% latency, 19.77 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+        (mlp): GPTBigCodeMLP(
+          302.02 M, 1.91% Params, 618.48 GMACs, 1.96% MACs, 2.81 ms, 0.64% latency, 439.93 TFLOPS, 
+          (c_fc): Linear(151.02 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 873.57 us, 0.20% latency, 707.99 TFLOPS, in_features=6144, out_features=24576, bias=True)
+          (c_proj): Linear(151.0 M, 0.95% Params, 309.24 GMACs, 0.98% MACs, 778.91 us, 0.18% latency, 794.02 TFLOPS, in_features=24576, out_features=6144, bias=True)
+          (act): GELUActivation(0, 0.00% Params, 0 MACs, 0.00% MACs, 936.99 us, 0.21% latency, 0.0 FLOPS, )
+          (dropout): Dropout(0, 0.00% Params, 0 MACs, 0.00% MACs, 45.06 us, 0.01% latency, 0.0 FLOPS, p=0.1, inplace=False)
+        )
+      )
+    )
+    (ln_f): LayerNorm(12.29 k, 0.00% Params, 0 MACs, 0.00% MACs, 1.55 ms, 0.35% latency, 20.34 GFLOPS, (6144,), eps=1e-05, elementwise_affine=True)
+  )
+  (lm_head): Linear(301.99 M, 1.91% Params, 309.24 GMACs, 0.98% MACs, 209.57 us, 0.05% latency, 2951.16 TFLOPS, in_features=6144, out_features=49152, bias=False)
+)
+------------------------------------------------------------------------------
