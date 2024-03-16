@@ -7,4 +7,5 @@ Profiling a transformer model involves measuring and analyzing its performance c
 3.	Prepare your input data: To profile your transformer model, you need to provide it with input data that is representative of the data it will encounter during inference. This can help you get a better understanding of the model's performance under real-world conditions.
 4.	Run the profiling tool: Once you have prepared your input data and selected a profiling tool, you can run the tool to measure the performance of your transformer model. The tool will generate a report that summarizes the performance metrics you specified.
 5.	Analyze the results: After profiling your transformer model, you should analyze the results to identify any performance bottlenecks or areas for improvement. You may need to experiment with different hyperparameters or architectures to optimize the performance of your model.
+
 Overall, profiling a transformer model is an important step in optimizing its performance and ensuring that it can meet the requirements of your application
